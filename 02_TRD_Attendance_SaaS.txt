@@ -1,0 +1,62 @@
+TECHNICAL REQUIREMENTS DOCUMENT (TRD)
+Multi-Tenant Attendance & Workforce Management Platform
+Version: 1.0
+
+1. TECHNOLOGY STACK
+Mobile: React Native
+Backend: FastAPI / Python
+Database: PostgreSQL
+ORM: SQLAlchemy
+Migrations: Alembic
+Validation: Pydantic
+API: REST
+Authentication: JWT
+Local storage: SQLite
+Maps: Google Maps
+Notifications: Firebase
+Deployment: Docker
+CI/CD: GitHub Actions
+
+2. ARCHITECTURE
+React Native -> REST API -> FastAPI -> Service Layer -> Repository/ORM -> PostgreSQL
+
+3. BACKEND STRUCTURE
+app/
+  main.py
+  api/v1/
+  models/
+  schemas/
+  services/
+  repositories/
+  dependencies/
+  core/
+  utils/
+migrations/
+tests/
+
+4. API MODULES
+/auth
+/users
+/organizations
+/employees
+/branches
+/attendance
+/locations
+/leaves
+/reports
+/subscriptions
+
+5. SECURITY
+JWT authentication, password hashing, RBAC, request validation, tenant isolation, rate limiting, audit logging, HTTPS and secure secret management.
+
+6. OFFLINE SYNCHRONIZATION
+Mobile stores pending attendance locally when offline. A sync manager submits queued records when connectivity returns. Server-side idempotency prevents duplicate attendance.
+
+7. LOCATION
+Mobile obtains GPS coordinates. Backend validates the assigned location and configured radius before accepting attendance.
+
+8. TESTING
+Unit, integration, API, RBAC, tenant-isolation, GPS/geofence, offline-sync and end-to-end testing.
+
+9. DEPLOYMENT
+Dockerized FastAPI service, PostgreSQL, reverse proxy/HTTPS, centralized logs, monitoring, backups and CI/CD.

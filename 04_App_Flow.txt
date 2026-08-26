@@ -1,0 +1,26 @@
+APPLICATION FLOW DOCUMENT
+Multi-Tenant Attendance & Workforce Management Platform
+Version: 1.0
+
+1. AUTHENTICATION
+Splash -> Authentication Check -> Login -> FastAPI -> JWT -> Role Detection -> Role Dashboard.
+
+2. SUPER ADMIN FLOW
+Login -> Dashboard -> Organizations -> Organization Details -> Plans/Subscriptions -> Platform Analytics.
+
+3. ORGANIZATION ADMIN FLOW
+Login -> Dashboard -> Employees / Branches / Locations / Attendance / Leaves / Reports / Settings.
+
+4. EMPLOYEE ATTENDANCE FLOW
+Employee -> Check-In -> Location Permission -> GPS Coordinates -> Assigned Location -> Distance Calculation -> Geofence Validation -> Attendance Creation -> Success.
+
+If outside the configured radius, attendance is rejected.
+
+5. OFFLINE FLOW
+Check-In -> Internet Check -> If offline, save to local SQLite -> Pending Sync Queue -> Internet Restored -> Sync API -> Server Validation -> Mark Synced.
+
+6. LEAVE FLOW
+Employee -> Leave Form -> Submit -> Admin/HR -> Approve or Reject -> Employee receives updated status.
+
+7. MULTI-TENANT FLOW
+Authenticated User -> organization_id from authorized context -> API authorization -> organization-scoped query -> response. No organization can access another organization's data.

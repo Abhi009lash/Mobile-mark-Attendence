@@ -1,0 +1,45 @@
+PRODUCT REQUIREMENTS DOCUMENT (PRD)
+Multi-Tenant Attendance & Workforce Management Platform
+Version: 1.0
+
+1. PRODUCT OVERVIEW
+A multi-tenant SaaS platform for organizations to manage employees, attendance, GPS/geofencing, leave, branches, locations, policies and reports.
+
+2. OBJECTIVES
+- Automate employee attendance.
+- Validate attendance using GPS and geofencing.
+- Support multiple organizations and administrators.
+- Support branches and multiple work locations.
+- Provide leave management and reports.
+- Support offline attendance and synchronization.
+- Provide a scalable SaaS foundation.
+
+3. USER ROLES
+Super Admin: manages the SaaS platform, organizations, plans and subscriptions.
+Organization Owner: manages one customer organization.
+HR Admin: manages employees, leave and attendance.
+Attendance Admin: manages attendance and locations.
+Branch Manager: manages assigned branch employees and attendance.
+Employee: check-in/out, attendance, leave and profile.
+
+4. CORE FEATURES
+Authentication: login, logout, refresh token, password reset, JWT.
+Organization: create, update, activate/deactivate, settings.
+Employees: create, update, deactivate, branch and role assignment.
+Attendance: check-in/out, GPS validation, geofence validation, late, overtime and manual attendance.
+Locations: coordinates, radius, branch assignment.
+Leave: leave types, applications, approval/rejection, balance and history.
+Reports: daily, monthly, employee, branch, leave, late and overtime.
+Offline: local attendance queue and server synchronization.
+
+5. MULTI-TENANCY
+Every customer organization is an isolated tenant. Organization-owned records must contain organization_id and API authorization must restrict access to the authenticated organization.
+
+6. BUSINESS MODEL
+The product can be sold as SaaS using plans based on employees, administrators, locations and features.
+
+7. MVP
+Multi-tenancy, authentication, RBAC, multiple admins, employees, branches, GPS attendance, geofencing, leave, basic reports, offline attendance and synchronization.
+
+8. FUTURE
+Subscriptions, payment gateway, advanced analytics, payroll integration, notifications, shift management, biometric verification and public APIs.

@@ -1,0 +1,45 @@
+BACKEND DATABASE SCHEMA
+PostgreSQL
+Multi-Tenant Attendance & Workforce Management Platform
+Version: 1.0
+
+1. organizations
+id, name, email, phone, status, created_at, updated_at
+
+2. users
+id, organization_id, branch_id, name, email, password_hash, role, status, created_at, updated_at
+
+3. branches
+id, organization_id, name, address, latitude, longitude, status, created_at, updated_at
+
+4. employees
+id, organization_id, user_id, branch_id, employee_code, designation, joining_date, status, created_at, updated_at
+
+5. locations
+id, organization_id, branch_id, name, latitude, longitude, radius, status, created_at, updated_at
+
+6. attendance
+id, organization_id, employee_id, location_id, date, check_in, check_out, check_in_latitude, check_in_longitude, check_out_latitude, check_out_longitude, status, source, created_at, updated_at
+
+7. leave_types
+id, organization_id, name, days_allowed, status, created_at
+
+8. leave_requests
+id, organization_id, employee_id, leave_type_id, start_date, end_date, reason, status, approved_by, created_at, updated_at
+
+9. attendance_policies
+id, organization_id, working_start_time, working_end_time, late_threshold, overtime_enabled, created_at, updated_at
+
+10. plans
+id, name, max_employees, max_admins, max_locations, price, billing_cycle, status
+
+11. subscriptions
+id, organization_id, plan_id, status, start_date, end_date, created_at, updated_at
+
+RELATIONSHIPS
+Organization -> Users, Branches, Locations, Employees, Attendance, Leave Types, Leave Requests, Policies and Subscription.
+Branch -> Employees and Locations.
+Employee -> Attendance and Leave Requests.
+
+TENANT SECURITY
+Every organization-owned table must contain organization_id. All queries must be scoped to the authenticated user's organization. Never trust organization_id supplied only by the client.
