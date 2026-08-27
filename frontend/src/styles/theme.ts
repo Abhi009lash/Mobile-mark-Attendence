@@ -1,3 +1,5 @@
+import { moderateScale, scale, verticalScale } from "./responsive";
+
 export const colors = {
   primary: "#2563EB",       // Vibrant Blue
   primaryDark: "#1D4ED8",
@@ -24,23 +26,23 @@ export const colors = {
 };
 
 export const spacing = {
-  xs: 4,
-  sm: 8,
-  md: 16,
-  lg: 24,
-  xl: 32,
-  xxl: 48,
+  xs: moderateScale(4),
+  sm: moderateScale(8),
+  md: moderateScale(16),
+  lg: moderateScale(24),
+  xl: moderateScale(32),
+  xxl: moderateScale(48),
 };
 
 export const typography = {
-  h1: { fontSize: 28, fontWeight: "700" as const, color: colors.text },
-  h2: { fontSize: 22, fontWeight: "700" as const, color: colors.text },
-  h3: { fontSize: 18, fontWeight: "600" as const, color: colors.text },
-  bodyLarge: { fontSize: 16, fontWeight: "400" as const, color: colors.text },
-  bodyMedium: { fontSize: 14, fontWeight: "400" as const, color: colors.text },
-  bodySmall: { fontSize: 12, fontWeight: "400" as const, color: colors.textSecondary },
-  button: { fontSize: 16, fontWeight: "600" as const },
-  caption: { fontSize: 11, fontWeight: "500" as const, color: colors.textMuted },
+  h1: { fontSize: moderateScale(26), fontWeight: "700" as const, color: colors.text },
+  h2: { fontSize: moderateScale(20), fontWeight: "700" as const, color: colors.text },
+  h3: { fontSize: moderateScale(16), fontWeight: "600" as const, color: colors.text },
+  bodyLarge: { fontSize: moderateScale(15), fontWeight: "400" as const, color: colors.text },
+  bodyMedium: { fontSize: moderateScale(13.5), fontWeight: "400" as const, color: colors.text },
+  bodySmall: { fontSize: moderateScale(12), fontWeight: "400" as const, color: colors.textSecondary },
+  button: { fontSize: moderateScale(15), fontWeight: "600" as const },
+  caption: { fontSize: moderateScale(11), fontWeight: "500" as const, color: colors.textMuted },
 };
 
 export const borderRadius = {
@@ -61,17 +63,17 @@ export const shadows = {
   },
   md: {
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 4,
+    shadowRadius: 5,
+    elevation: 3,
   },
   lg: {
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowRadius: 10,
+    elevation: 6,
   },
 };
 

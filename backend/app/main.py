@@ -1,12 +1,12 @@
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 
 from app.core.config import settings
-from app.core.database import engine, Base
+from app.core.database import engine, SessionLocal, Base, auto_migrate_schema
 from app.core.redis import redis_service
+from app.core.init_db import init_db
 from app.api.v1.api import api_router
 
 # Configure logging
@@ -19,9 +19,20 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: Ensure tables exist
+    # Startup: Ensure tables exist & auto-migrate new columns
     logger.info("Initializing database tables...")
     Base.metadata.create_all(bind=engine)
+    auto_migrate_schema(engine)
+
+    # Initialize universal Super Admin & default plans
+    db = SessionLocal()
+    try:
+        init_db(db)
+    except Exception as e:
+        logger.error(f"Error initializing default database seeds: {e}")
+    finally:
+        db.close()
+
     logger.info(f"Database initialized. Redis connected: {redis_service.is_connected}")
     yield
     # Shutdown

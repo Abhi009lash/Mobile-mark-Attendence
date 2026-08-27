@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, RefreshControl } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { ScreenWrapper, Card, Button, StatusBadge } from "../../components";
 import { useAuth } from "../../hooks/useAuth";
 import { theme } from "../../styles/theme";
@@ -15,27 +15,19 @@ export interface DashboardScreenProps {
 export const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) => {
   const { user, logout } = useAuth();
   const [todayAttendance, setTodayAttendance] = useState<AttendanceRecord | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date().toLocaleTimeString());
-    }, 1000);
+    const timer = setInterval(() => setCurrentTime(new Date().toLocaleTimeString()), 1000);
     return () => clearInterval(timer);
   }, []);
 
   const loadTodayStatus = async () => {
-    setRefreshing(true);
     try {
       const res = await apiClient.get<AttendanceRecord[]>("/attendance/history?limit=1");
-      if (res.data && res.data.length > 0) {
-        setTodayAttendance(res.data[0]);
-      }
+      if (res.data && res.data.length > 0) setTodayAttendance(res.data[0]);
     } catch {
-      // Ignore network errors
-    } finally {
-      setRefreshing(false);
+      // Fallback
     }
   };
 
@@ -43,26 +35,27 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) 
     loadTodayStatus();
   }, []);
 
+  const navItems = [
+    { title: "📅 History", screen: "AttendanceHistory" },
+    { title: "🌴 Apply Leave", screen: "LeaveApplication" },
+    { title: "📋 Leave Records", screen: "LeaveHistory" },
+    { title: "⏳ Regularizations", screen: "RegularizationHistory" },
+    { title: "🕒 My Shift", screen: "ShiftDetails" },
+    { title: "🔔 Notifications", screen: "Notifications" },
+  ];
+
   return (
-    <ScreenWrapper
-      scrollable
-      contentContainerStyle={styles.container}
-    >
-      {/* Header Profile Greeting */}
+    <ScreenWrapper scrollable contentContainerStyle={styles.container}>
       <View style={styles.header}>
-        <View>
+        <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
           <Text style={styles.greeting}>Welcome back,</Text>
-          <Text style={styles.userName}>{user?.name || "Employee"}</Text>
-        </View>
-        <Button
-          title="Sign Out"
-          variant="outline"
-          size="small"
-          onPress={logout}
-        />
+          <Text style={styles.userName} numberOfLines={1}>
+            {user?.name || "Employee"} 👤
+          </Text>
+        </TouchableOpacity>
+        <Button title="Sign Out" variant="outline" size="small" onPress={logout} />
       </View>
 
-      {/* Clock & Status Card */}
       <Card style={styles.clockCard}>
         <Text style={styles.dateText}>
           {new Date().toLocaleDateString(undefined, {
@@ -73,7 +66,6 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) 
           })}
         </Text>
         <Text style={styles.timeText}>{currentTime}</Text>
-
         <View style={styles.statusRow}>
           <Text style={styles.statusLabel}>Today's Status:</Text>
           <StatusBadge
@@ -83,41 +75,23 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) 
         </View>
       </Card>
 
-      {/* Primary Action */}
-      <View style={styles.actionSection}>
-        <Button
-          title="Mark Attendance (GPS Check-In)"
-          onPress={() => navigation.navigate("CheckIn")}
-          size="large"
-          style={styles.checkInBtn}
-        />
-      </View>
+      <Button
+        title="📍 Mark Attendance (GPS Check-In)"
+        onPress={() => navigation.navigate("CheckIn")}
+        size="large"
+        style={styles.checkInBtn}
+      />
 
-      {/* Quick Navigation Cards */}
-      <View style={styles.quickNavGrid}>
-        <Card style={styles.navCard}>
-          <Text style={styles.navCardTitle}>Attendance History</Text>
-          <Text style={styles.navCardDesc}>View your monthly attendance log</Text>
-          <Button
-            title="View History"
-            variant="secondary"
-            size="small"
-            onPress={() => navigation.navigate("AttendanceHistory")}
-            style={styles.navBtn}
-          />
-        </Card>
-
-        <Card style={styles.navCard}>
-          <Text style={styles.navCardTitle}>Apply Leave</Text>
-          <Text style={styles.navCardDesc}>Submit sick, casual, or earned leave</Text>
-          <Button
-            title="Apply Leave"
-            variant="secondary"
-            size="small"
-            onPress={() => navigation.navigate("LeaveApplication")}
-            style={styles.navBtn}
-          />
-        </Card>
+      <View style={styles.grid}>
+        {navItems.map((item, idx) => (
+          <TouchableOpacity
+            key={idx}
+            style={styles.gridCard}
+            onPress={() => navigation.navigate(item.screen)}
+          >
+            <Text style={styles.gridText}>{item.title}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
     </ScreenWrapper>
   );
@@ -125,16 +99,17 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) 
 
 const styles = StyleSheet.create({
   container: {
-    padding: theme.spacing.lg,
+    padding: theme.spacing.md,
+    gap: theme.spacing.md,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: theme.spacing.lg,
   },
   greeting: {
-    ...theme.typography.bodySmall,
+    ...theme.typography.caption,
+    color: theme.colors.textSecondary,
   },
   userName: {
     ...theme.typography.h2,
@@ -142,19 +117,18 @@ const styles = StyleSheet.create({
   },
   clockCard: {
     alignItems: "center",
-    paddingVertical: theme.spacing.xl,
-    marginBottom: theme.spacing.lg,
+    paddingVertical: theme.spacing.lg,
   },
   dateText: {
-    ...theme.typography.bodyMedium,
+    ...theme.typography.bodySmall,
     color: theme.colors.textSecondary,
-    marginBottom: theme.spacing.xs,
+    marginBottom: 4,
   },
   timeText: {
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: "700",
     color: theme.colors.primary,
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
   },
   statusRow: {
     flexDirection: "row",
@@ -164,31 +138,31 @@ const styles = StyleSheet.create({
   statusLabel: {
     ...theme.typography.bodyMedium,
     fontWeight: "600",
-    color: theme.colors.text,
-  },
-  actionSection: {
-    marginBottom: theme.spacing.lg,
   },
   checkInBtn: {
-    height: 54,
+    minHeight: 48,
   },
-  quickNavGrid: {
-    gap: theme.spacing.md,
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    rowGap: theme.spacing.sm,
   },
-  navCard: {
-    padding: theme.spacing.lg,
+  gridCard: {
+    width: "48%",
+    backgroundColor: theme.colors.surface,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    minHeight: 52,
   },
-  navCardTitle: {
-    ...theme.typography.h3,
-    marginBottom: theme.spacing.xs,
-  },
-  navCardDesc: {
+  gridText: {
     ...theme.typography.bodySmall,
-    color: theme.colors.textSecondary,
-    marginBottom: theme.spacing.md,
-  },
-  navBtn: {
-    alignSelf: "flex-start",
+    fontWeight: "700",
+    color: theme.colors.text,
   },
 });
 

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, Alert } from "react-native";
-import { ScreenWrapper, Input, Button, Card } from "../../components";
+import { ScreenWrapper, Input, Button, Card, Logo } from "../../components";
 import { useAuth } from "../../hooks/useAuth";
 import { theme } from "../../styles/theme";
 
@@ -33,14 +33,13 @@ export const LoginScreen: React.FC = () => {
   return (
     <ScreenWrapper scrollable contentContainerStyle={styles.container}>
       <View style={styles.headerContainer}>
-        <Text style={styles.appName}>Mobile Attendance</Text>
-        <Text style={styles.subtitle}>Workforce Management Platform</Text>
+        <Logo size="large" showTagline />
       </View>
 
       <Card style={styles.card}>
         <Text style={styles.cardTitle}>Sign In</Text>
         <Text style={styles.cardSubtitle}>
-          Enter your credentials to mark attendance
+          Enter your workforce credentials
         </Text>
 
         {errorMessage ? (
@@ -77,7 +76,7 @@ export const LoginScreen: React.FC = () => {
 
       <View style={styles.footer}>
         <Text style={styles.footerText}>
-          Multi-Tenant SaaS • 15m Token Security • GPS Geofenced
+          GeoPunch SaaS • 15m Token Security • GPS Geofenced
         </Text>
       </View>
     </ScreenWrapper>
@@ -93,16 +92,6 @@ const styles = StyleSheet.create({
   headerContainer: {
     alignItems: "center",
     marginBottom: theme.spacing.xl,
-  },
-  appName: {
-    ...theme.typography.h1,
-    color: theme.colors.primary,
-    textAlign: "center",
-  },
-  subtitle: {
-    ...theme.typography.bodyMedium,
-    color: theme.colors.textSecondary,
-    marginTop: theme.spacing.xs,
   },
   card: {
     padding: theme.spacing.xl,

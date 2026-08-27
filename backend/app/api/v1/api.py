@@ -10,6 +10,11 @@ from app.api.v1.endpoints import (
     leaves,
     policies,
     reports,
+    regularizations,
+    audit_logs,
+    shifts,
+    holidays,
+    notifications,
 )
 
 api_router = APIRouter()
@@ -24,3 +29,8 @@ api_router.include_router(attendance.router, prefix="/attendance", tags=["Attend
 api_router.include_router(leaves.router, prefix="/leaves", tags=["Leaves"])
 api_router.include_router(policies.router, prefix="/policies", tags=["Attendance Policies"])
 api_router.include_router(reports.router, prefix="/reports", tags=["Reports & Analytics"])
+api_router.include_router(regularizations.router, prefix="/regularizations", tags=["Attendance Regularizations"])
+api_router.include_router(audit_logs.router, prefix="/audit-logs", tags=["Audit Logs"])
+api_router.include_router(shifts.router, prefix="/shifts", tags=["Shifts & Rosters"])
+api_router.include_router(holidays.router, prefix="/holidays", tags=["Holidays"])
+api_router.include_router(notifications.router, prefix="/notifications", tags=["Notifications"])

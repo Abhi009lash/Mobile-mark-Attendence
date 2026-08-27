@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, FlatList } from "react-native";
-import { ScreenWrapper, Header, Card, StatusBadge, LoadingSpinner } from "../../components";
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from "react-native";
+import { ScreenWrapper, Header, Card, StatusBadge, LoadingSpinner, Button } from "../../components";
+import { RegularizeModal } from "../../components/attendance/RegularizeModal";
 import { theme } from "../../styles/theme";
 import apiClient from "../../api/client";
 import { AttendanceRecord } from "../../types";
@@ -16,6 +17,7 @@ export const AttendanceHistoryScreen: React.FC<AttendanceHistoryScreenProps> = (
 }) => {
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedDateForReg, setSelectedDateForReg] = useState<string | null>(null);
 
   const fetchHistory = async () => {
     setLoading(true);
@@ -47,7 +49,17 @@ export const AttendanceHistoryScreen: React.FC<AttendanceHistoryScreenProps> = (
           Check-Out: <Text style={styles.timeVal}>{item.check_out ? new Date(item.check_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}</Text>
         </Text>
       </View>
-      <Text style={styles.sourceText}>Source: {item.source}</Text>
+      <View style={styles.footerRow}>
+        <Text style={styles.sourceText}>Source: {item.source}</Text>
+        {item.status !== "present" && (
+          <TouchableOpacity
+            onPress={() => setSelectedDateForReg(item.date)}
+            style={styles.regAction}
+          >
+            <Text style={styles.regActionText}>Regularize</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </Card>
   );
 
@@ -68,6 +80,15 @@ export const AttendanceHistoryScreen: React.FC<AttendanceHistoryScreenProps> = (
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+        />
+      )}
+
+      {selectedDateForReg && (
+        <RegularizeModal
+          visible={!!selectedDateForReg}
+          date={selectedDateForReg}
+          onClose={() => setSelectedDateForReg(null)}
+          onSuccess={fetchHistory}
         />
       )}
     </ScreenWrapper>
@@ -109,10 +130,26 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: theme.colors.text,
   },
+  footerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: theme.spacing.xs,
+  },
   sourceText: {
     ...theme.typography.caption,
-    marginTop: theme.spacing.xs - 2,
     textTransform: "capitalize",
+  },
+  regAction: {
+    paddingVertical: 2,
+    paddingHorizontal: theme.spacing.sm,
+    backgroundColor: theme.colors.primaryLight,
+    borderRadius: theme.borderRadius.xs,
+  },
+  regActionText: {
+    ...theme.typography.caption,
+    fontWeight: "700",
+    color: theme.colors.primary,
   },
   emptyContainer: {
     flex: 1,

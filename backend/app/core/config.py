@@ -1,6 +1,5 @@
 import os
-from typing import List, Union
-from pydantic import AnyHttpUrl, field_validator
+from typing import List, Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -14,15 +13,13 @@ class Settings(BaseSettings):
 
     # General
     ENVIRONMENT: str = "development"
-    PROJECT_NAME: str = "Mobile Attendance SaaS"
+    PROJECT_NAME: str = "GeoPunch - Workforce Attendance SaaS"
     API_V1_STR: str = "/api/v1"
 
     # Security & Tokens
-    # Access Token lifetime: 15 minutes (in minutes)
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
-    # Refresh Token lifetime: 90 days (in days)
     REFRESH_TOKEN_EXPIRE_DAYS: int = 90
-    JWT_SECRET_KEY: str = "attendance_super_secret_jwt_key_secure_change_in_production_2026"
+    JWT_SECRET_KEY: str = "geopunch_super_secret_jwt_key_secure_change_in_production_2026"
     JWT_ALGORITHM: str = "HS256"
 
     # Database
@@ -35,6 +32,15 @@ class Settings(BaseSettings):
 
     # Redis
     REDIS_URL: str = "redis://localhost:6379/0"
+
+    # SMTP Email Configuration
+    SMTP_HOST: Optional[str] = "smtp.mailtrap.io"
+    SMTP_PORT: int = 587
+    SMTP_USER: Optional[str] = None
+    SMTP_PASSWORD: Optional[str] = None
+    SMTP_TLS: bool = True
+    EMAILS_FROM_EMAIL: str = "no-reply@geopunch.io"
+    EMAILS_FROM_NAME: str = "GeoPunch Workforce Platform"
 
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = [

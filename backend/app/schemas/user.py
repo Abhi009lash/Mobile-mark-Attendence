@@ -25,11 +25,16 @@ class UserUpdate(BaseModel):
     password: Optional[str] = Field(None, min_length=6)
 
 
+class PushTokenUpdate(BaseModel):
+    push_token: str = Field(..., description="Expo / FCM Push Token (e.g. ExponentPushToken[xxx])")
+
+
 class UserResponse(UserBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
     organization_id: Optional[int] = None
+    push_token: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 

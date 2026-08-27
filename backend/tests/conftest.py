@@ -13,6 +13,7 @@ os.environ["REFRESH_TOKEN_EXPIRE_DAYS"] = "90"
 
 from app.core.database import Base, get_db
 from app.core.security import get_password_hash
+from app.core.init_db import init_db
 from app.main import app
 from app.models.organization import Organization
 from app.models.user import User, UserRole
@@ -44,6 +45,9 @@ def db():
     connection = engine.connect()
     transaction = connection.begin()
     session = TestingSessionLocal(bind=connection)
+
+    # Initialize universal Super Admin & default plans
+    init_db(session)
 
     yield session
 

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="iconBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E293B" />
+      <stop offset="100%" stop-color="#0F172A" />
+    </linearGradient>
+    <linearGradient id="pinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#2563EB" />
+    </linearGradient>
+    <linearGradient id="checkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399" />
+      <stop offset="100%" stop-color="#10B981" />
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="128" fill="url(#iconBg)" />
+  <circle cx="256" cy="230" r="170" fill="none" stroke="#2563EB" stroke-width="4" stroke-dasharray="10 8" opacity="0.4" />
+
+  <!-- Pin Shape -->
+  <path d="M256 90 C170 90 120 150 120 235 C120 325 240 405 256 415 C272 405 392 325 392 235 C392 150 342 90 256 90 Z" fill="url(#pinGrad)" />
+  <circle cx="256" cy="225" r="75" fill="#0F172A" stroke="#38BDF8" stroke-width="5" />
+
+  <!-- Verification Checkmark -->
+  <path d="M225 225 L248 248 L295 195" fill="none" stroke="url(#checkGrad)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" />
+</svg>

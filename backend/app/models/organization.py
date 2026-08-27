@@ -11,6 +11,7 @@ class Organization(Base, TimestampMixin):
     name = Column(String(255), nullable=False)
     email = Column(String(255), unique=True, index=True, nullable=False)
     phone = Column(String(50), nullable=True)
+    user_limit = Column(Integer, default=50, nullable=False)        # Maximum allowed employees / users
     status = Column(String(50), default="active", nullable=False)  # active, inactive, suspended
 
     # Relationships

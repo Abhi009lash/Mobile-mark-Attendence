@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Attendance Platform - Application Launcher & Runner
+GeoPunch SaaS - Application Launcher & Runner
 Runs the FastAPI backend and orchestrates the environment.
 Usage:
     python start_mobile.py [--port 8000] [--host 0.0.0.0] [--reload]
@@ -21,7 +21,7 @@ FRONTEND_DIR = ROOT_DIR / "frontend"
 def print_banner():
     banner = """
 ===================================================================
-   Multi-Tenant Attendance & Workforce Management Platform
+      GeoPunch — Multi-Tenant Workforce Attendance Platform
    Backend: FastAPI (Port 8000) | JWT: 15m | Refresh: 90d
 ===================================================================
     """
@@ -36,7 +36,7 @@ def check_environment():
 
 
 def run_backend(host: str = "0.0.0.0", port: int = 8000, reload: bool = True):
-    print(f"[*] Starting FastAPI backend on http://{host}:{port} ...")
+    print(f"[*] Starting GeoPunch API backend on http://{host}:{port} ...")
     print(f"[*] Interactive API Docs: http://localhost:{port}/docs")
     print(f"[*] OpenAPI JSON Schema: http://localhost:{port}/openapi.json")
     print(f"[*] Press Ctrl+C to stop the server.\n")
@@ -72,11 +72,11 @@ def run_backend(host: str = "0.0.0.0", port: int = 8000, reload: bool = True):
         try:
             subprocess.run(cmd, cwd=str(BACKEND_DIR))
         except KeyboardInterrupt:
-            print("\n[*] Backend server stopped.")
+            print("\n[*] GeoPunch backend server stopped.")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Multi-Tenant Attendance Platform Runner")
+    parser = argparse.ArgumentParser(description="GeoPunch SaaS Platform Runner")
     parser.add_argument("--host", default="0.0.0.0", help="Host interface to bind (default: 0.0.0.0)")
     parser.add_argument("--port", type=int, default=8000, help="Port to bind (default: 8000)")
     parser.add_argument("--no-reload", action="store_true", help="Disable auto-reload")

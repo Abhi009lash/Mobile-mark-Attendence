@@ -25,6 +25,7 @@ class User(Base, TimestampMixin):
     password_hash = Column(String(255), nullable=False)
     role = Column(String(50), default=UserRole.EMPLOYEE.value, nullable=False, index=True)
     status = Column(String(50), default="active", nullable=False)  # active, inactive, suspended
+    push_token = Column(String(255), nullable=True)               # Native Expo / FCM mobile push token
 
     # Relationships
     organization = relationship("Organization", back_populates="users")

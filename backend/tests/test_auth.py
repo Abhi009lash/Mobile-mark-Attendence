@@ -9,6 +9,31 @@ def test_password_hashing():
     assert verify_password("WrongPassword", hashed) is False
 
 
+def test_universal_superadmin_login(client, db):
+    """
+    Test universal Super Admin authentication with universal credentials.
+    Email: superadmin@example.com
+    Password: superpassword123
+    """
+    response = client.post(
+        "/api/v1/auth/login",
+        json={"email": "superadmin@example.com", "password": "superpassword123"}
+    )
+    assert response.status_code == 200
+    data = response.json()
+
+    assert "access_token" in data
+    assert "refresh_token" in data
+    assert data["role"] == "super_admin"
+    assert data["email"] == "superadmin@example.com"
+    assert data["organization_id"] is None  # Universal platform-level admin
+
+    # Verify access token claims
+    claims = decode_token(data["access_token"])
+    assert claims["role"] == "super_admin"
+    assert claims["organization_id"] is None
+
+
 def test_login_success_and_token_lifetimes(client, seed_test_data):
     response = client.post(
         "/api/v1/auth/login",

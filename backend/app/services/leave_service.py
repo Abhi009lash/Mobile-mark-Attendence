@@ -3,10 +3,12 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.models.user import User
+from app.models.employee import Employee
 from app.models.leave import LeaveRequest, LeaveType, LeaveRequestStatus
 from app.repositories.leave_repository import LeaveRepository
 from app.repositories.employee_repository import EmployeeRepository
 from app.schemas.leave import LeaveRequestCreate, LeaveRequestStatusUpdate
+from app.services.notification_service import NotificationService
 
 
 class LeaveService:
@@ -63,7 +65,23 @@ class LeaveService:
                 detail="Leave request not found."
             )
 
-        return leave_repo.update_leave_request(req, {
+        updated_req = leave_repo.update_leave_request(req, {
             "status": status_update.status,
             "approved_by": current_user.id
         })
+
+        # Find employee user_id to send in-app notification
+        emp = db.query(Employee).filter(Employee.id == req.employee_id).first()
+        if emp and emp.user_id:
+            is_approved = status_update.status == LeaveRequestStatus.APPROVED.value
+            type_name = req.leave_type.name if req.leave_type else "Leave"
+            NotificationService.send_leave_decision_alert(
+                db=db,
+                organization_id=current_user.organization_id,
+                user_id=emp.user_id,
+                leave_type=type_name,
+                is_approved=is_approved,
+                approver_name=current_user.name
+            )
+
+        return updated_req

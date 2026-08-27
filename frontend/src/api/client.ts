@@ -1,7 +1,8 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from "axios";
 
-// Default API URL (can be customized per environment)
-export const API_BASE_URL = "http://localhost:8000/api/v1";
+// API Base URL loaded from .env (EXPO_PUBLIC_API_URL) with network IP fallback
+export const API_BASE_URL =
+  process.env.EXPO_PUBLIC_API_URL || "http://192.168.0.4:8000/api/v1";
 
 let currentAccessToken: string | null = null;
 let currentRefreshToken: string | null = null;

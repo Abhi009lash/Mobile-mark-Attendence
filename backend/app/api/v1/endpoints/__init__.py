@@ -9,6 +9,11 @@ from app.api.v1.endpoints import (
     leaves,
     policies,
     reports,
+    regularizations,
+    audit_logs,
+    shifts,
+    holidays,
+    notifications,
 )
 
 __all__ = [
@@ -22,4 +27,9 @@ __all__ = [
     "leaves",
     "policies",
     "reports",
+    "regularizations",
+    "audit_logs",
+    "shifts",
+    "holidays",
+    "notifications",
 ]
