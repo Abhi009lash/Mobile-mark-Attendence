@@ -1,33 +1,37 @@
-import enum
-from sqlalchemy import Column, Integer, String, ForeignKey, Enum
-from sqlalchemy.orm import relationship
-from app.core.database import Base
-from app.models.base import TimestampMixin
+import uuid
+from enum import Enum
+from typing import Optional
+from sqlalchemy import String, ForeignKey
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from app.models.base import Base, UUIDMixin, TimestampMixin
 
 
-class UserRole(str, enum.Enum):
-    SUPER_ADMIN = "super_admin"
-    ORGANIZATION_OWNER = "organization_owner"
-    HR_ADMIN = "hr_admin"
-    ATTENDANCE_ADMIN = "attendance_admin"
-    BRANCH_MANAGER = "branch_manager"
-    EMPLOYEE = "employee"
+class UserRole(str, Enum):
+    SUPER_ADMIN = "SUPER_ADMIN"
+    ATTENDANCE_ADMIN = "ATTENDANCE_ADMIN"
+    FIELD_EMPLOYEE = "FIELD_EMPLOYEE"
 
 
-class User(Base, TimestampMixin):
+class UserStatus(str, Enum):
+    ACTIVE = "ACTIVE"
+    INACTIVE = "INACTIVE"
+    SUSPENDED = "SUSPENDED"
+
+
+class User(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True, index=True)
-    branch_id = Column(Integer, ForeignKey("branches.id", ondelete="SET NULL"), nullable=True, index=True)
-    name = Column(String(255), nullable=False)
-    email = Column(String(255), unique=True, index=True, nullable=False)
-    password_hash = Column(String(255), nullable=False)
-    role = Column(String(50), default=UserRole.EMPLOYEE.value, nullable=False, index=True)
-    status = Column(String(50), default="active", nullable=False)  # active, inactive, suspended
-    push_token = Column(String(255), nullable=True)               # Native Expo / FCM mobile push token
+    organization_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+    full_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    role: Mapped[UserRole] = mapped_column(String(30), nullable=False)
+    status: Mapped[UserStatus] = mapped_column(String(20), default=UserStatus.ACTIVE, nullable=False)
 
-    # Relationships
     organization = relationship("Organization", back_populates="users")
-    branch = relationship("Branch", back_populates="users", foreign_keys=[branch_id])
-    employee_profile = relationship("Employee", back_populates="user", uselist=False, cascade="all, delete-orphan")

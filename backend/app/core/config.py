@@ -1,55 +1,68 @@
-import os
-from typing import List, Optional
+from typing import List, Optional, Union
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(".env", "../.env"),
         env_file_encoding="utf-8",
         case_sensitive=True,
-        extra="ignore"
+        extra="ignore",
     )
 
-    # General
     ENVIRONMENT: str = "development"
-    PROJECT_NAME: str = "GeoPunch - Workforce Attendance SaaS"
+    PROJECT_NAME: str = "Geopoint Attendance SaaS"
     API_V1_STR: str = "/api/v1"
 
-    # Security & Tokens
+    # Security
+    JWT_SECRET_KEY: str = "default_development_secret_key_please_change_in_production_32char"
+    JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 90
-    JWT_SECRET_KEY: str = "geopunch_super_secret_jwt_key_secure_change_in_production_2026"
-    JWT_ALGORITHM: str = "HS256"
+    OTP_EXPIRE_MINUTES: int = 10
+    OTP_MAX_ATTEMPTS: int = 5
 
     # Database
-    DATABASE_URL: str = "sqlite:///./attendance.db"
-    POSTGRES_SERVER: str = "localhost"
-    POSTGRES_PORT: int = 5432
-    POSTGRES_USER: str = "postgres"
-    POSTGRES_PASSWORD: str = "postgres"
-    POSTGRES_DB: str = "attendance_db"
+    DATABASE_URL: str = "postgresql+psycopg2://postgres:root@localhost:5432/attendance_db"
 
     # Redis
     REDIS_URL: str = "redis://localhost:6379/0"
 
-    # SMTP Email Configuration
-    SMTP_HOST: Optional[str] = "smtp.mailtrap.io"
-    SMTP_PORT: int = 587
-    SMTP_USER: Optional[str] = None
-    SMTP_PASSWORD: Optional[str] = None
-    SMTP_TLS: bool = True
-    EMAILS_FROM_EMAIL: str = "no-reply@geopunch.io"
-    EMAILS_FROM_NAME: str = "GeoPunch Workforce Platform"
-
     # CORS
-    BACKEND_CORS_ORIGINS: List[str] = [
+    BACKEND_CORS_ORIGINS: Union[List[str], str] = [
         "http://localhost:3000",
         "http://localhost:8081",
         "http://localhost:19006",
         "http://localhost:8000",
-        "*"
+        "*",
     ]
+
+    # SMTP Email Configuration
+    SMTP_HOST: Optional[str] = None
+    SMTP_PORT: int = 587
+    SMTP_USER: Optional[str] = None
+    SMTP_PASSWORD: Optional[str] = None
+    SMTP_FROM_EMAIL: str = "noreply@geopoint.io"
+    SMTP_FROM_NAME: str = "Geopoint Security"
+    SMTP_TLS: bool = True
+    SMTP_SSL: bool = False
+    EMAILS_ENABLED: bool = False
+
+    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
+    @classmethod
+    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
+        if isinstance(v, str) and not v.startswith("["):
+            return [i.strip() for i in v.split(",") if i.strip()]
+        elif isinstance(v, str) and v.startswith("["):
+            import json
+            try:
+                return json.loads(v)
+            except Exception:
+                return ["*"]
+        elif isinstance(v, list):
+            return v
+        return ["*"]
 
 
 settings = Settings()

@@ -1,85 +1,67 @@
 import logging
 from sqlalchemy.orm import Session
-from app.core.security import get_password_hash
-from app.models.user import User, UserRole
-from app.models.subscription import Plan
+
+from app.core.security import hash_password
+from app.models.organization import Organization, OrganizationStatus
+from app.models.user import User, UserRole, UserStatus
 
 logger = logging.getLogger(__name__)
 
 SUPERADMIN_EMAIL = "superadmin@example.com"
-SUPERADMIN_PASSWORD = "superpassword123"
+SUPERADMIN_PASSWORD = "Superpassword123"
+
+ADMIN_EMAIL = "admin@gmail.com"
+ADMIN_PASSWORD = "Admin@123"
+
+DEFAULT_ORG_NAME = "Geopoint Technologies"
+DEFAULT_ORG_SLUG = "geopoint-technologies"
 
 
-def init_superadmin(db: Session) -> User:
+def init_db(db: Session) -> None:
     """
-    Ensure the universal Super Admin account exists in the database.
-    Email: superadmin@example.com
-    Password: superpassword123
-    Role: super_admin (Universal SaaS platform administrator)
+    Idempotently seeds the database with the standard built-in Super Admin,
+    default Organization, and Attendance Admin.
     """
-    user = db.query(User).filter(User.email == SUPERADMIN_EMAIL).first()
-    if not user:
-        logger.info(f"Seeding universal Super Admin account ({SUPERADMIN_EMAIL})...")
-        user = User(
+    # 1. Super Admin (Platform level, organization_id=None)
+    super_admin = db.query(User).filter(User.email == SUPERADMIN_EMAIL).first()
+    if not super_admin:
+        super_admin = User(
+            organization_id=None,
             email=SUPERADMIN_EMAIL,
-            name="Platform Super Admin",
-            password_hash=get_password_hash(SUPERADMIN_PASSWORD),
-            role=UserRole.SUPER_ADMIN.value,
-            organization_id=None,  # Universal platform-wide access
-            branch_id=None,
-            status="active"
+            full_name="Super Administrator",
+            password_hash=hash_password(SUPERADMIN_PASSWORD),
+            role=UserRole.SUPER_ADMIN,
+            status=UserStatus.ACTIVE,
         )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-        logger.info("Universal Super Admin account created successfully.")
-    else:
-        # Ensure credentials & role are in sync
-        user.role = UserRole.SUPER_ADMIN.value
-        user.status = "active"
-        db.commit()
-        db.refresh(user)
+        db.add(super_admin)
+        logger.info(f"Standard Super Admin created: {SUPERADMIN_EMAIL}")
 
-    return user
-
-
-def init_default_plans(db: Session):
-    """Seed default SaaS subscription plans if none exist."""
-    existing_plans = db.query(Plan).count()
-    if existing_plans == 0:
-        logger.info("Seeding default subscription plans...")
-        starter = Plan(
-            name="Starter",
-            max_employees=25,
-            max_admins=2,
-            max_locations=2,
-            price=29.0,
-            billing_cycle="monthly",
-            status="active"
+    # 2. Standard Organization
+    org = db.query(Organization).filter(Organization.slug == DEFAULT_ORG_SLUG).first()
+    if not org:
+        org = Organization(
+            name=DEFAULT_ORG_NAME,
+            slug=DEFAULT_ORG_SLUG,
+            email=ADMIN_EMAIL,
+            phone="+1-800-555-GEO",
+            status=OrganizationStatus.ACTIVE,
         )
-        business = Plan(
-            name="Business",
-            max_employees=100,
-            max_admins=10,
-            max_locations=10,
-            price=99.0,
-            billing_cycle="monthly",
-            status="active"
-        )
-        enterprise = Plan(
-            name="Enterprise",
-            max_employees=1000,
-            max_admins=50,
-            max_locations=50,
-            price=299.0,
-            billing_cycle="monthly",
-            status="active"
-        )
-        db.add_all([starter, business, enterprise])
-        db.commit()
+        db.add(org)
+        db.flush()
+        logger.info(f"Standard Organization created: {DEFAULT_ORG_NAME}")
 
+    # 3. Attendance Admin (Organization level)
+    admin = db.query(User).filter(User.email == ADMIN_EMAIL).first()
+    if not admin:
+        admin = User(
+            organization_id=org.id,
+            email=ADMIN_EMAIL,
+            full_name="Organization Administrator",
+            password_hash=hash_password(ADMIN_PASSWORD),
+            role=UserRole.ATTENDANCE_ADMIN,
+            status=UserStatus.ACTIVE,
+        )
+        db.add(admin)
+        logger.info(f"Standard Attendance Admin created: {ADMIN_EMAIL}")
 
-def init_db(db: Session):
-    """Initialize essential seed data."""
-    init_superadmin(db)
-    init_default_plans(db)
+    db.commit()

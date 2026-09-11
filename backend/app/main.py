@@ -1,83 +1,65 @@
-import logging
-from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.api.v1.router import api_router
 from app.core.config import settings
-from app.core.database import engine, SessionLocal, Base, auto_migrate_schema
-from app.core.redis import redis_service
-from app.core.init_db import init_db
-from app.api.v1.api import api_router
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
-)
-logger = logging.getLogger(__name__)
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup: Ensure tables exist & auto-migrate new columns
-    logger.info("Initializing database tables...")
-    Base.metadata.create_all(bind=engine)
-    auto_migrate_schema(engine)
-
-    # Initialize universal Super Admin & default plans
-    db = SessionLocal()
-    try:
-        init_db(db)
-    except Exception as e:
-        logger.error(f"Error initializing default database seeds: {e}")
-    finally:
-        db.close()
-
-    logger.info(f"Database initialized. Redis connected: {redis_service.is_connected}")
-    yield
-    # Shutdown
-    logger.info("Application shutting down...")
-
-
-app = FastAPI(
-    title=settings.PROJECT_NAME,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json",
-    docs_url="/docs",
-    redoc_url="/redoc",
-    lifespan=lifespan
-)
-
-# CORS Middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+from app.core.exceptions import (
+    GeopointException,
+    geopoint_exception_handler,
+    http_exception_handler,
+    validation_exception_handler,
 )
 
 
-@app.get("/health", tags=["Health"])
-def health_check():
-    """Application and infrastructure health check endpoint."""
-    return {
-        "status": "healthy",
-        "environment": settings.ENVIRONMENT,
-        "redis_connected": redis_service.is_connected,
-        "access_token_expire_minutes": settings.ACCESS_TOKEN_EXPIRE_MINUTES,
-        "refresh_token_expire_days": settings.REFRESH_TOKEN_EXPIRE_DAYS,
-    }
+def create_app() -> FastAPI:
+    app = FastAPI(
+        title=settings.PROJECT_NAME,
+        description="Geopoint Enterprise Multi-Tenant Attendance & Workforce Management API",
+        version="1.0.0",
+        openapi_url=f"{settings.API_V1_STR}/openapi.json",
+        docs_url=f"{settings.API_V1_STR}/docs",
+        redoc_url=f"{settings.API_V1_STR}/redoc",
+    )
+
+    # CORS Middleware
+    if settings.BACKEND_CORS_ORIGINS:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+
+    # Global Exception Handlers
+    app.add_exception_handler(GeopointException, geopoint_exception_handler)
+    app.add_exception_handler(StarletteHTTPException, http_exception_handler)
+    app.add_exception_handler(RequestValidationError, validation_exception_handler)
+
+    # Mount API Routers
+    app.include_router(api_router, prefix=settings.API_V1_STR)
+
+    @app.get("/", tags=["Root"])
+    def root():
+        return {
+            "name": settings.PROJECT_NAME,
+            "version": "1.0.0",
+            "docs": f"{settings.API_V1_STR}/docs",
+            "health": f"{settings.API_V1_STR}/health",
+        }
+
+    @app.get("/docs", include_in_schema=False)
+    def docs_redirect():
+        return RedirectResponse(url=f"{settings.API_V1_STR}/docs")
+
+    @app.get("/redoc", include_in_schema=False)
+    def redoc_redirect():
+        return RedirectResponse(url=f"{settings.API_V1_STR}/redoc")
+
+    return app
 
 
-@app.get("/", tags=["Root"])
-def root():
-    return {
-        "message": f"Welcome to {settings.PROJECT_NAME} API",
-        "docs": "/docs",
-        "health": "/health",
-        "version": "1.0.0"
-    }
-
-
-# Include API v1 Router
-app.include_router(api_router, prefix=settings.API_V1_STR)
+app = create_app()

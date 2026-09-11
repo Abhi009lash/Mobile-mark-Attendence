@@ -1,24 +1,27 @@
-from typing import Optional, List
+import uuid
+from typing import Optional
 from sqlalchemy.orm import Session
 from app.models.user import User
-from app.repositories.base import BaseRepository
 
 
-class UserRepository(BaseRepository[User]):
+class UserRepository:
     def __init__(self, db: Session):
-        super().__init__(User, db)
+        self.db = db
+
+    def get_by_id(self, user_id: uuid.UUID) -> Optional[User]:
+        return self.db.query(User).filter(User.id == user_id).first()
 
     def get_by_email(self, email: str) -> Optional[User]:
         return self.db.query(User).filter(User.email == email.lower().strip()).first()
 
-    def get_by_org_and_email(self, organization_id: int, email: str) -> Optional[User]:
-        return self.db.query(User).filter(
-            User.organization_id == organization_id,
-            User.email == email.lower().strip()
-        ).first()
+    def create(self, user: User) -> User:
+        self.db.add(user)
+        self.db.commit()
+        self.db.refresh(user)
+        return user
 
-    def list_by_role(self, organization_id: int, role: str) -> List[User]:
-        return self.db.query(User).filter(
-            User.organization_id == organization_id,
-            User.role == role
-        ).all()
+    def update_password(self, user: User, hashed_password: str) -> User:
+        user.password_hash = hashed_password
+        self.db.commit()
+        self.db.refresh(user)
+        return user

@@ -1,5 +1,5 @@
-from typing import Optional
 from pydantic import BaseModel, EmailStr, Field
+from app.schemas.user import UserResponse
 
 
 class LoginRequest(BaseModel):
@@ -11,29 +11,34 @@ class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
-    # Access token expires in 15 minutes = 900 seconds
-    expires_in: int = 900
-    user_id: int
-    email: str
-    name: str
-    role: str
-    organization_id: Optional[int] = None
-    branch_id: Optional[int] = None
+    user: UserResponse
 
 
-class TokenRefreshRequest(BaseModel):
+class RefreshTokenRequest(BaseModel):
     refresh_token: str
 
 
-class TokenPayload(BaseModel):
-    sub: str
-    organization_id: Optional[int] = None
-    role: Optional[str] = None
-    type: str
-    jti: str
-    iat: int
-    exp: int
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
 
 
-class LogoutRequest(BaseModel):
-    refresh_token: Optional[str] = None
+class VerifyOTPRequest(BaseModel):
+    email: EmailStr
+    otp: str = Field(..., min_length=6, max_length=6, pattern=r"^[0-9]{6}$")
+
+
+class VerifyOTPResponse(BaseModel):
+    reset_token: str
+    message: str
+
+
+class ResetPasswordRequest(BaseModel):
+    reset_token: str
+    new_password: str = Field(..., min_length=6)
+
+
+from typing import Optional
+
+class MessageResponse(BaseModel):
+    message: str
+    dev_otp: Optional[str] = None

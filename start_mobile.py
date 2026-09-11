@@ -37,8 +37,8 @@ def check_environment():
 
 def run_backend(host: str = "0.0.0.0", port: int = 8000, reload: bool = True):
     print(f"[*] Starting GeoPunch API backend on http://{host}:{port} ...")
-    print(f"[*] Interactive API Docs: http://localhost:{port}/docs")
-    print(f"[*] OpenAPI JSON Schema: http://localhost:{port}/openapi.json")
+    print(f"[*] Interactive API Docs: http://localhost:{port}/api/v1/docs")
+    print(f"[*] OpenAPI JSON Schema: http://localhost:{port}/api/v1/openapi.json")
     print(f"[*] Press Ctrl+C to stop the server.\n")
 
     # Add backend directory to sys.path so app module is discoverable

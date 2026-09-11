@@ -1,106 +1,77 @@
-import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 import bcrypt
 import jwt
 
 from app.core.config import settings
 
 
-def get_password_hash(password: str) -> str:
-    """Hash a password using bcrypt."""
-    salt = bcrypt.gensalt(rounds=12)
-    hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
-    return hashed.decode("utf-8")
+def hash_password(password: str) -> str:
+    """Hashes a plaintext password using bcrypt."""
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a plain password against a bcrypt hash."""
+    """Verifies a plaintext password against a bcrypt hash in constant time."""
     try:
-        return bcrypt.checkpw(
-            plain_password.encode("utf-8"),
-            hashed_password.encode("utf-8")
-        )
+        return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
     except Exception:
         return False
 
 
 def create_access_token(
-    subject: Union[str, int],
-    organization_id: Optional[int] = None,
-    role: Optional[str] = None,
+    subject: str,
+    org_id: Optional[str],
+    role: str,
     expires_delta: Optional[timedelta] = None,
-    custom_claims: Optional[Dict[str, Any]] = None
 ) -> str:
-    """
-    Create a JWT Access Token.
-    Expires in 15 minutes by default.
-    """
-    now = datetime.now(timezone.utc)
+    """Issues a cryptographically signed access token containing tenant and role claims."""
     if expires_delta:
-        expire = now + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = now + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 
-    jti = str(uuid.uuid4())
     to_encode: Dict[str, Any] = {
         "sub": str(subject),
-        "organization_id": organization_id,
+        "org_id": str(org_id) if org_id else None,
         "role": role,
         "type": "access",
-        "jti": jti,
-        "iat": int(now.timestamp()),
-        "exp": int(expire.timestamp()),
+        "exp": expire,
     }
-
-    if custom_claims:
-        to_encode.update(custom_claims)
-
-    encoded_jwt = jwt.encode(
-        to_encode,
-        settings.JWT_SECRET_KEY,
-        algorithm=settings.JWT_ALGORITHM
-    )
-    return encoded_jwt
+    return jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
 
-def create_refresh_token(
-    subject: Union[str, int],
-    organization_id: Optional[int] = None,
-    expires_delta: Optional[timedelta] = None
-) -> str:
-    """
-    Create a Refresh Token.
-    Expires in 90 days by default.
-    """
-    now = datetime.now(timezone.utc)
+def create_refresh_token(subject: str, expires_delta: Optional[timedelta] = None) -> str:
+    """Issues a long-lived refresh token."""
     if expires_delta:
-        expire = now + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = now + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+        expire = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
 
-    jti = str(uuid.uuid4())
     to_encode: Dict[str, Any] = {
         "sub": str(subject),
-        "organization_id": organization_id,
         "type": "refresh",
-        "jti": jti,
-        "iat": int(now.timestamp()),
-        "exp": int(expire.timestamp()),
+        "exp": expire,
     }
+    return jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
-    encoded_jwt = jwt.encode(
-        to_encode,
-        settings.JWT_SECRET_KEY,
-        algorithm=settings.JWT_ALGORITHM
-    )
-    return encoded_jwt
+
+def create_password_reset_token(subject: str, expires_delta: Optional[timedelta] = None) -> str:
+    """Issues a 15-minute single-purpose password reset token."""
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+
+    to_encode: Dict[str, Any] = {
+        "sub": str(subject),
+        "type": "reset",
+        "exp": expire,
+    }
+    return jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
 
 def decode_token(token: str) -> Dict[str, Any]:
-    """Decode and validate a JWT token signature and expiration."""
-    return jwt.decode(
-        token,
-        settings.JWT_SECRET_KEY,
-        algorithms=[settings.JWT_ALGORITHM]
-    )
+    """Decodes and cryptographically verifies a signed JWT token."""
+    return jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])

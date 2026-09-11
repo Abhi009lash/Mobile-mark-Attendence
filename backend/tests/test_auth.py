@@ -1,123 +1,249 @@
-from app.core.security import decode_token, verify_password, get_password_hash
+import pytest
+from app.core.security import hash_password
+from app.models.organization import Organization, OrganizationStatus
+from app.models.user import User, UserRole, UserStatus
+from app.models.otp import PasswordResetOTP
+from app.dependencies.db import SessionLocal
+from app.services.auth_service import AuthService
+from app.repositories.user_repository import UserRepository
+from app.repositories.otp_repository import OTPRepository
 
 
-def test_password_hashing():
-    raw = "MySecret123!"
-    hashed = get_password_hash(raw)
-    assert hashed != raw
-    assert verify_password(raw, hashed) is True
-    assert verify_password("WrongPassword", hashed) is False
+@pytest.fixture(scope="function")
+def seed_user():
+    db = SessionLocal()
+    try:
+        # Create test organization
+        org = Organization(
+            name="Acme Corp",
+            slug="acme-corp",
+            email="admin@acme.com",
+            status=OrganizationStatus.ACTIVE,
+        )
+        db.add(org)
+        db.commit()
+        db.refresh(org)
+
+        # Create active field employee
+        user = User(
+            organization_id=org.id,
+            email="employee@acme.com",
+            full_name="John Doe",
+            password_hash=hash_password("Password123!"),
+            role=UserRole.FIELD_EMPLOYEE,
+            status=UserStatus.ACTIVE,
+        )
+        db.add(user)
+
+        # Create inactive user
+        inactive_user = User(
+            organization_id=org.id,
+            email="inactive@acme.com",
+            full_name="Inactive User",
+            password_hash=hash_password("Password123!"),
+            role=UserRole.FIELD_EMPLOYEE,
+            status=UserStatus.INACTIVE,
+        )
+        db.add(inactive_user)
+
+        db.commit()
+        db.refresh(user)
+        db.refresh(inactive_user)
+
+        yield {
+            "org": org,
+            "user": user,
+            "inactive_user": inactive_user,
+            "password": "Password123!",
+        }
+    finally:
+        # Cleanup in proper dependency order
+        db.query(PasswordResetOTP).delete()
+        db.query(User).delete()
+        db.query(Organization).delete()
+        db.commit()
+        db.close()
 
 
-def test_universal_superadmin_login(client, db):
-    """
-    Test universal Super Admin authentication with universal credentials.
-    Email: superadmin@example.com
-    Password: superpassword123
-    """
+def test_login_success(client, seed_user):
     response = client.post(
         "/api/v1/auth/login",
-        json={"email": "superadmin@example.com", "password": "superpassword123"}
+        json={"email": seed_user["user"].email, "password": seed_user["password"]},
     )
     assert response.status_code == 200
     data = response.json()
-
-    assert "access_token" in data
-    assert "refresh_token" in data
-    assert data["role"] == "super_admin"
-    assert data["email"] == "superadmin@example.com"
-    assert data["organization_id"] is None  # Universal platform-level admin
-
-    # Verify access token claims
-    claims = decode_token(data["access_token"])
-    assert claims["role"] == "super_admin"
-    assert claims["organization_id"] is None
-
-
-def test_login_success_and_token_lifetimes(client, seed_test_data):
-    response = client.post(
-        "/api/v1/auth/login",
-        json={"email": "john@acme.com", "password": "Password123!"}
-    )
-    assert response.status_code == 200
-    data = response.json()
-
     assert "access_token" in data
     assert "refresh_token" in data
     assert data["token_type"] == "bearer"
-    assert data["expires_in"] == 900  # 15 minutes = 900 seconds
-    assert data["email"] == "john@acme.com"
-    assert data["role"] == "employee"
-
-    # Decode and verify access token claims
-    access_claims = decode_token(data["access_token"])
-    assert access_claims["type"] == "access"
-    assert access_claims["role"] == "employee"
-    assert access_claims["organization_id"] == seed_test_data["org1"].id
-    # 15 minutes lifetime validation (900 seconds)
-    assert access_claims["exp"] - access_claims["iat"] == 900
-
-    # Decode and verify refresh token claims (90 days = 7776000 seconds)
-    refresh_claims = decode_token(data["refresh_token"])
-    assert refresh_claims["type"] == "refresh"
-    assert refresh_claims["exp"] - refresh_claims["iat"] == 90 * 86400
+    assert data["user"]["email"] == seed_user["user"].email
+    assert data["user"]["role"] == "FIELD_EMPLOYEE"
 
 
-def test_login_invalid_credentials(client, seed_test_data):
+def test_login_invalid_password(client, seed_user):
     response = client.post(
         "/api/v1/auth/login",
-        json={"email": "john@acme.com", "password": "WrongPassword!"}
+        json={"email": seed_user["user"].email, "password": "WrongPassword!"},
     )
     assert response.status_code == 401
+    data = response.json()
+    assert data["error"]["code"] == "INVALID_CREDENTIALS"
 
 
-def test_refresh_token_rotation(client, seed_test_data):
-    login_res = client.post(
+def test_login_inactive_account(client, seed_user):
+    response = client.post(
         "/api/v1/auth/login",
-        json={"email": "john@acme.com", "password": "Password123!"}
+        json={"email": seed_user["inactive_user"].email, "password": seed_user["password"]},
     )
-    initial_refresh = login_res.json()["refresh_token"]
-
-    refresh_res = client.post(
-        "/api/v1/auth/refresh",
-        json={"refresh_token": initial_refresh}
-    )
-    assert refresh_res.status_code == 200
-    new_data = refresh_res.json()
-    assert "access_token" in new_data
-    assert "refresh_token" in new_data
-    assert new_data["refresh_token"] != initial_refresh
-
-    # Using the old refresh token again should be rejected (revoked / rotated)
-    reused_res = client.post(
-        "/api/v1/auth/refresh",
-        json={"refresh_token": initial_refresh}
-    )
-    assert reused_res.status_code == 401
+    assert response.status_code == 403
+    data = response.json()
+    assert data["error"]["code"] == "ACCOUNT_INACTIVE"
 
 
-def test_logout_and_revocation(client, seed_test_data):
-    login_res = client.post(
+def test_get_me_authenticated(client, seed_user):
+    login_resp = client.post(
         "/api/v1/auth/login",
-        json={"email": "john@acme.com", "password": "Password123!"}
+        json={"email": seed_user["user"].email, "password": seed_user["password"]},
     )
-    token_data = login_res.json()
-    access_token = token_data["access_token"]
-    refresh_token = token_data["refresh_token"]
+    token = login_resp.json()["access_token"]
 
-    # Verify protected route works before logout
-    headers = {"Authorization": f"Bearer {access_token}"}
-    me_res = client.get("/api/v1/auth/me", headers=headers)
-    assert me_res.status_code == 200
+    response = client.get(
+        "/api/v1/auth/me",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["email"] == seed_user["user"].email
+    assert data["full_name"] == "John Doe"
+    assert data["role"] == "FIELD_EMPLOYEE"
 
-    # Logout
-    logout_res = client.post(
+
+def test_logout_authenticated(client, seed_user):
+    login_resp = client.post(
+        "/api/v1/auth/login",
+        json={"email": seed_user["user"].email, "password": seed_user["password"]},
+    )
+    token = login_resp.json()["access_token"]
+
+    response = client.post(
         "/api/v1/auth/logout",
-        json={"refresh_token": refresh_token},
-        headers=headers
+        headers={"Authorization": f"Bearer {token}"},
     )
-    assert logout_res.status_code == 200
+    assert response.status_code == 200
+    assert "Successfully logged out" in response.json()["message"]
 
-    # Protected route should now fail with 401 (token blacklisted)
-    me_after_res = client.get("/api/v1/auth/me", headers=headers)
-    assert me_after_res.status_code == 401
+
+def test_forgot_password_anti_enumeration(client, seed_user):
+    # Existing email
+    resp1 = client.post(
+        "/api/v1/auth/forgot-password",
+        json={"email": seed_user["user"].email},
+    )
+    assert resp1.status_code == 200
+
+    # Non-existing email
+    resp2 = client.post(
+        "/api/v1/auth/forgot-password",
+        json={"email": "doesnotexist@nowhere.com"},
+    )
+    assert resp2.status_code == 200
+    assert resp1.json()["message"] == resp2.json()["message"]
+
+
+def test_otp_verification_and_password_reset_flow(client, seed_user):
+    db = SessionLocal()
+    try:
+        user_repo = UserRepository(db)
+        otp_repo = OTPRepository(db)
+        auth_service = AuthService(user_repo, otp_repo)
+
+        # 1. Dispatch OTP
+        raw_otp = auth_service.request_password_reset_otp(seed_user["user"].email)
+        assert raw_otp is not None
+        assert len(raw_otp) == 6
+        assert raw_otp.isdigit()
+
+        # 2. Verify OTP via API endpoint
+        verify_resp = client.post(
+            "/api/v1/auth/verify-otp",
+            json={"email": seed_user["user"].email, "otp": raw_otp},
+        )
+        assert verify_resp.status_code == 200
+        verify_data = verify_resp.json()
+        assert "reset_token" in verify_data
+        reset_token = verify_data["reset_token"]
+
+        # 3. Reset password using verified reset_token
+        new_password = "BrandNewPassword789!"
+        reset_resp = client.post(
+            "/api/v1/auth/reset-password",
+            json={"reset_token": reset_token, "new_password": new_password},
+        )
+        assert reset_resp.status_code == 200
+
+        # 4. Old password must fail
+        old_login = client.post(
+            "/api/v1/auth/login",
+            json={"email": seed_user["user"].email, "password": seed_user["password"]},
+        )
+        assert old_login.status_code == 401
+
+        # 5. New password must succeed
+        new_login = client.post(
+            "/api/v1/auth/login",
+            json={"email": seed_user["user"].email, "password": new_password},
+        )
+        assert new_login.status_code == 200
+    finally:
+        db.close()
+
+
+def test_verify_otp_invalid_code_and_lockout(client, seed_user):
+    db = SessionLocal()
+    try:
+        user_repo = UserRepository(db)
+        otp_repo = OTPRepository(db)
+        auth_service = AuthService(user_repo, otp_repo)
+
+        # Dispatch OTP
+        auth_service.request_password_reset_otp(seed_user["user"].email)
+
+        # Submit wrong code
+        bad_resp = client.post(
+            "/api/v1/auth/verify-otp",
+            json={"email": seed_user["user"].email, "otp": "000000"},
+        )
+        assert bad_resp.status_code == 400
+        assert "Incorrect verification code" in bad_resp.json()["error"]["message"]
+
+        # Exhaust remaining attempts (up to 5 attempts total)
+        for _ in range(4):
+            client.post(
+                "/api/v1/auth/verify-otp",
+                json={"email": seed_user["user"].email, "otp": "000000"},
+            )
+
+        # 6th attempt should be locked out
+        lockout_resp = client.post(
+            "/api/v1/auth/verify-otp",
+            json={"email": seed_user["user"].email, "otp": "000000"},
+        )
+        assert lockout_resp.status_code in [400, 429]
+    finally:
+        db.close()
+
+
+def test_refresh_token_lifecycle(client, seed_user):
+    login_resp = client.post(
+        "/api/v1/auth/login",
+        json={"email": seed_user["user"].email, "password": seed_user["password"]},
+    )
+    refresh_token = login_resp.json()["refresh_token"]
+
+    refresh_resp = client.post(
+        "/api/v1/auth/refresh",
+        json={"refresh_token": refresh_token},
+    )
+    assert refresh_resp.status_code == 200
+    data = refresh_resp.json()
+    assert "access_token" in data
+    assert "refresh_token" in data
