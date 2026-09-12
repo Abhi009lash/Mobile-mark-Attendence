@@ -42,6 +42,12 @@ def create_app() -> FastAPI:
     # Mount API Routers
     app.include_router(api_router, prefix=settings.API_V1_STR)
 
+    # Mount Static Files Directory for Uploads (logos, media)
+    import os
+    from starlette.staticfiles import StaticFiles
+    os.makedirs(os.path.join(settings.STATIC_DIR, "uploads", "logos"), exist_ok=True)
+    app.mount("/static", StaticFiles(directory=settings.STATIC_DIR), name="static")
+
     @app.get("/", tags=["Root"])
     def root():
         return {

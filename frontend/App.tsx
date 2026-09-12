@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Image, SafeAreaView, Dimensions } from 'react-native';
+import { StyleSheet, Image, SafeAreaView, Dimensions, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { LoginScreen } from './src/screens/auth/LoginScreen';
 import { ForgotPasswordScreen } from './src/screens/auth/ForgotPasswordScreen';
 import { OTPVerificationScreen } from './src/screens/auth/OTPVerificationScreen';
 import { ResetPasswordScreen } from './src/screens/auth/ResetPasswordScreen';
 import { LogoutScreen, AuthenticatedUser } from './src/screens/auth/LogoutScreen';
+import { SuperAdminShell } from './src/screens/superadmin/SuperAdminShell';
 import { tokenStorage } from './src/services/storage/tokenStorage';
 import { onSessionExpired } from './src/api/auth';
 
 const { width } = Dimensions.get('window');
 const LOGO_SIZE = Math.min(width * 0.8, 320);
 
-type AuthScreen = 'login' | 'forgot_password' | 'otp_verification' | 'reset_password' | 'logout';
+type AuthScreen = 'login' | 'forgot_password' | 'otp_verification' | 'reset_password' | 'logout' | 'superadmin';
 
 export default function App(): React.JSX.Element {
   const [showLogo, setShowLogo] = useState(true);
@@ -42,7 +44,11 @@ export default function App(): React.JSX.Element {
           setCurrentUser(storedUser);
           setAccessToken(storedAccess);
           setRefreshToken(storedRefresh);
-          setCurrentScreen('logout');
+          if (storedUser.role === 'SUPER_ADMIN') {
+            setCurrentScreen('superadmin');
+          } else {
+            setCurrentScreen('logout');
+          }
         }
       } catch {
         // Fallback to login
@@ -96,6 +102,19 @@ export default function App(): React.JSX.Element {
             }}
           />
         );
+      case 'superadmin':
+        return (
+          <SuperAdminShell
+            user={currentUser}
+            onLogout={async () => {
+              await tokenStorage.clearSession();
+              setCurrentUser(null);
+              setAccessToken(null);
+              setRefreshToken(null);
+              setCurrentScreen('login');
+            }}
+          />
+        );
       case 'logout':
         if (currentUser) {
           return (
@@ -118,7 +137,11 @@ export default function App(): React.JSX.Element {
               setCurrentUser(user);
               setAccessToken(token);
               setRefreshToken(rToken);
-              setCurrentScreen('logout');
+              if (user.role === 'SUPER_ADMIN') {
+                setCurrentScreen('superadmin');
+              } else {
+                setCurrentScreen('logout');
+              }
             }}
           />
         );
@@ -131,31 +154,42 @@ export default function App(): React.JSX.Element {
               setCurrentUser(user);
               setAccessToken(token);
               setRefreshToken(rToken);
-              setCurrentScreen('logout');
+              if (user.role === 'SUPER_ADMIN') {
+                setCurrentScreen('superadmin');
+              } else {
+                setCurrentScreen('logout');
+              }
             }}
           />
         );
     }
   };
 
-  if (!showLogo) {
-    return (
-      <SafeAreaView style={styles.appContainer}>
-        {renderScreen()}
-        <StatusBar style="dark" />
-      </SafeAreaView>
-    );
-  }
-
   return (
-    <SafeAreaView style={styles.container}>
-      <Image
-        source={require('./assets/icon.png')}
-        style={styles.logo}
-        resizeMode="contain"
-      />
-      <StatusBar style="dark" />
-    </SafeAreaView>
+    <SafeAreaProvider>
+      {!showLogo ? (
+        currentScreen === 'superadmin' ? (
+          <View style={styles.darkAppContainer}>
+            <StatusBar style="light" />
+            {renderScreen()}
+          </View>
+        ) : (
+          <SafeAreaView style={styles.appContainer}>
+            <StatusBar style="dark" />
+            {renderScreen()}
+          </SafeAreaView>
+        )
+      ) : (
+        <SafeAreaView style={styles.container}>
+          <Image
+            source={require('./assets/icon.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <StatusBar style="dark" />
+        </SafeAreaView>
+      )}
+    </SafeAreaProvider>
   );
 }
 
@@ -163,6 +197,10 @@ const styles = StyleSheet.create({
   appContainer: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+  },
+  darkAppContainer: {
+    flex: 1,
+    backgroundColor: '#001C6B',
   },
   container: {
     flex: 1,

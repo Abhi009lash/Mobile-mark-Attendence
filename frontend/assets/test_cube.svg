@@ -1,0 +1,26 @@
+<svg width="240" height="240" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="topGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0543CA" />
+      <stop offset="60%" stop-color="#477BDE" />
+      <stop offset="100%" stop-color="#FFFFFF" />
+    </linearGradient>
+    <linearGradient id="leftGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#001C6B" />
+      <stop offset="100%" stop-color="#0543CA" />
+    </linearGradient>
+    <linearGradient id="rightGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0543CA" />
+      <stop offset="100%" stop-color="#38BDF8" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Left face -->
+  <path fill="url(#leftGrad)" fill-rule="evenodd" d="M 120.0 120.0 L 50.7 80.0 L 50.7 160.0 L 120.0 200.0 Z M 104.4 129.0 L 104.4 173.0 L 66.3 151.0 L 66.3 107.0 Z" />
+  
+  <!-- Right face -->
+  <path fill="url(#rightGrad)" fill-rule="evenodd" d="M 120.0 120.0 L 189.3 80.0 L 189.3 160.0 L 120.0 200.0 Z M 135.6 129.0 L 135.6 173.0 L 173.7 151.0 L 173.7 107.0 Z" />
+
+  <!-- Top face -->
+  <path fill="url(#topGrad)" fill-rule="evenodd" d="M 120.0 40.0 L 189.3 80.0 L 120.0 120.0 L 50.7 80.0 Z M 120.0 58.0 L 81.9 80.0 L 120.0 102.0 L 158.1 80.0 Z" />
+</svg>

@@ -2,6 +2,16 @@ import { logger } from '../utils/logger';
 import { tokenStorage } from '../services/storage/tokenStorage';
 
 function resolveApiBaseUrl(): string {
+  if (typeof window !== 'undefined' && window.location) {
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:8000/api/v1';
+    }
+    if (hostname) {
+      return `http://${hostname}:8000/api/v1`;
+    }
+  }
+
   let url = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.0.2:8000/api/v1';
 
   if (url.includes('0.0.0.0')) {
@@ -138,8 +148,9 @@ async function performSilentRefresh(): Promise<string> {
 
 export async function executeAuthRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   let token = await tokenStorage.getAccessToken();
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...(options.headers as Record<string, string>),
   };
 

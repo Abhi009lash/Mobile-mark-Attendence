@@ -17,6 +17,7 @@ def seed_user():
         org = Organization(
             name="Acme Corp",
             slug="acme-corp",
+            code="ACME-01",
             email="admin@acme.com",
             status=OrganizationStatus.ACTIVE,
         )

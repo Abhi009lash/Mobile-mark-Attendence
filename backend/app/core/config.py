@@ -1,3 +1,4 @@
+import os
 from typing import List, Optional, Union
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -14,6 +15,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     PROJECT_NAME: str = "Geopoint Attendance SaaS"
     API_V1_STR: str = "/api/v1"
+    STATIC_DIR: str = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "static")
 
     # Security
     JWT_SECRET_KEY: str = "default_development_secret_key_please_change_in_production_32char"

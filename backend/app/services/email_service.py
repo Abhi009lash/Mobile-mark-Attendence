@@ -76,3 +76,82 @@ class EmailService:
         </div>
         """
         return cls.send_email(recipient_email, subject, text_body, html_body)
+
+    @classmethod
+    def send_organization_onboarding_email(
+        cls,
+        recipient_email: str,
+        name: str,
+        slug: str,
+        code: str,
+        max_admins: int,
+        max_employees: int,
+    ) -> bool:
+        subject = f"Welcome to Geopoint - {name} Registration Confirmed"
+        text_body = (
+            f"Hello,\n\n"
+            f"Your organization '{name}' has been successfully onboarded to Geopoint.\n\n"
+            f"Organization Code: {code}\n"
+            f"Slug: {slug}\n"
+            f"Allocated Admin Quota: {max_admins}\n"
+            f"Allocated Employee Quota: {max_employees}\n\n"
+            f"An attendance administrator will be provisioned by the platform shortly.\n\n"
+            f"Best regards,\nGeopoint Platform Team"
+        )
+        html_body = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 540px; margin: auto; padding: 24px; border: 1px solid #E2E8F0; border-radius: 12px; background-color: #ffffff;">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h2 style="color: #1657DE; margin: 0;">Welcome to Geopoint</h2>
+                <p style="color: #64748B; font-size: 14px; margin-top: 4px;">Multi-Tenant Workforce & Attendance Platform</p>
+            </div>
+            <p style="color: #334155; font-size: 15px;">Your organization <strong>{name}</strong> has been registered on the platform.</p>
+            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; margin: 20px 0;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 14px; color: #475569;">
+                    <tr><td style="padding: 6px 0;"><strong>Company:</strong></td><td>{name}</td></tr>
+                    <tr><td style="padding: 6px 0;"><strong>Org Code:</strong></td><td><code style="background: #EFF6FF; color: #1D4ED8; padding: 2px 6px; border-radius: 4px;">{code}</code></td></tr>
+                    <tr><td style="padding: 6px 0;"><strong>Slug:</strong></td><td>{slug}</td></tr>
+                    <tr><td style="padding: 6px 0;"><strong>Allowed Admins:</strong></td><td>{max_admins}</td></tr>
+                    <tr><td style="padding: 6px 0;"><strong>Allowed Employees:</strong></td><td>{max_employees}</td></tr>
+                </table>
+            </div>
+            <p style="color: #64748B; font-size: 13px;">An organization administrator account will be provisioned by the platform shortly.</p>
+            <p style="color: #94A3B8; font-size: 12px; margin-top: 24px; text-align: center;">Geopoint Platform &copy; 2026</p>
+        </div>
+        """
+        return cls.send_email(recipient_email, subject, text_body, html_body)
+
+    @classmethod
+    def send_admin_credentials_email(
+        cls,
+        recipient_email: str,
+        full_name: str,
+        organization_name: str,
+        temp_password: str,
+    ) -> bool:
+        subject = f"Your Geopoint Administrator Account - {organization_name}"
+        text_body = (
+            f"Hello {full_name},\n\n"
+            f"You have been appointed as an Attendance Administrator for {organization_name} on Geopoint.\n\n"
+            f"Login Email: {recipient_email}\n"
+            f"Password: {temp_password}\n\n"
+            f"Please sign in to configure your office settings and onboard your employees.\n\n"
+            f"Best regards,\nGeopoint Platform Team"
+        )
+        html_body = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 540px; margin: auto; padding: 24px; border: 1px solid #E2E8F0; border-radius: 12px; background-color: #ffffff;">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h2 style="color: #1657DE; margin: 0;">Geopoint Administrator Access</h2>
+                <p style="color: #64748B; font-size: 14px; margin-top: 4px;">{organization_name}</p>
+            </div>
+            <p style="color: #334155; font-size: 15px;">Hello <strong>{full_name}</strong>,</p>
+            <p style="color: #475569; font-size: 14px;">An administrator account has been provisioned for you. Use the credentials below to access the Geopoint management portal:</p>
+            <div style="background: #F1F5F9; border-radius: 8px; padding: 18px; margin: 20px 0;">
+                <p style="margin: 0 0 8px 0; color: #475569; font-size: 14px;"><strong>Email:</strong> {recipient_email}</p>
+                <p style="margin: 0; color: #475569; font-size: 14px;"><strong>Password:</strong> <code style="background: #FFFFFF; border: 1px solid #CBD5E1; padding: 3px 8px; border-radius: 4px; color: #0F172A; font-weight: bold;">{temp_password}</code></p>
+            </div>
+            <p style="color: #64748B; font-size: 13px;">Once signed in, you can configure your office geofence location and manage your team members.</p>
+            <p style="color: #94A3B8; font-size: 12px; margin-top: 24px; text-align: center;">Geopoint Security Team</p>
+        </div>
+        """
+        return cls.send_email(recipient_email, subject, text_body, html_body)
+

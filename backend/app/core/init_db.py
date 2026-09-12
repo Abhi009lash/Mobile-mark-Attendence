@@ -42,6 +42,7 @@ def init_db(db: Session) -> None:
         org = Organization(
             name=DEFAULT_ORG_NAME,
             slug=DEFAULT_ORG_SLUG,
+            code="GEO-01",
             email=ADMIN_EMAIL,
             phone="+1-800-555-GEO",
             status=OrganizationStatus.ACTIVE,
