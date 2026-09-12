@@ -1,3 +1,4 @@
+import base64
 import os
 import re
 import shutil
@@ -36,18 +37,70 @@ def _build_org_response(org: Organization, repo: OrganizationRepository) -> Orga
 
 
 @router.post("/upload-logo", response_model=dict, status_code=status.HTTP_201_CREATED)
-def upload_organization_logo(
-    file: UploadFile = File(...),
+async def upload_organization_logo(
+    request: Request,
+    file: Optional[UploadFile] = File(None),
     _: User = Depends(require_super_admin),
 ):
+    upload_dir = os.path.join(settings.STATIC_DIR, "uploads", "logos")
+    os.makedirs(upload_dir, exist_ok=True)
+
+    content_type = request.headers.get("content-type", "")
+
+    # 1. Handle JSON base64 payload (avoids React Native / Expo FormDataPart issues)
+    if "application/json" in content_type:
+        try:
+            body = await request.json()
+        except Exception:
+            raise GeopointException("Invalid JSON payload.", "INVALID_PAYLOAD", 400)
+
+        raw_b64 = body.get("image_base64") or body.get("file")
+        if not raw_b64:
+            raise GeopointException("Missing image_base64 data.", "MISSING_DATA", 400)
+
+        ext = ".png"
+        if "," in raw_b64 and "data:" in raw_b64:
+            header, raw_b64 = raw_b64.split(",", 1)
+            if "image/jpeg" in header or "image/jpg" in header:
+                ext = ".jpg"
+            elif "image/webp" in header:
+                ext = ".webp"
+            elif "image/gif" in header:
+                ext = ".gif"
+            elif "image/svg" in header:
+                ext = ".svg"
+        else:
+            filename = body.get("filename", "")
+            if filename:
+                parsed_ext = os.path.splitext(filename)[1]
+                if parsed_ext:
+                    ext = parsed_ext
+
+        try:
+            image_bytes = base64.b64decode(raw_b64)
+        except Exception:
+            raise GeopointException("Invalid base64 encoding.", "INVALID_BASE64", 400)
+
+        unique_name = f"logo_{uuid.uuid4().hex[:12]}{ext}"
+        file_path = os.path.join(upload_dir, unique_name)
+        with open(file_path, "wb") as f:
+            f.write(image_bytes)
+
+        return {"logo_url": f"/static/uploads/logos/{unique_name}"}
+
+    # 2. Handle multipart/form-data payload
+    if file is None:
+        form = await request.form()
+        file = form.get("file")  # type: ignore
+        if not file or not hasattr(file, "file"):
+            raise GeopointException("No file was uploaded.", "NO_FILE_UPLOADED", 400)
+
     allowed_types = ["image/jpeg", "image/png", "image/webp", "image/svg+xml", "image/gif"]
     if file.content_type and file.content_type not in allowed_types:
         raise GeopointException("Only JPEG, PNG, WebP, and SVG images are permitted.", "INVALID_IMAGE_TYPE", 400)
 
     ext = os.path.splitext(file.filename or "")[1] or ".png"
     unique_name = f"logo_{uuid.uuid4().hex[:12]}{ext}"
-    upload_dir = os.path.join(settings.STATIC_DIR, "uploads", "logos")
-    os.makedirs(upload_dir, exist_ok=True)
     file_path = os.path.join(upload_dir, unique_name)
 
     with open(file_path, "wb") as buffer:

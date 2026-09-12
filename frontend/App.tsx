@@ -10,6 +10,7 @@ import { LogoutScreen, AuthenticatedUser } from './src/screens/auth/LogoutScreen
 import { SuperAdminShell } from './src/screens/superadmin/SuperAdminShell';
 import { tokenStorage } from './src/services/storage/tokenStorage';
 import { onSessionExpired } from './src/api/auth';
+import { ToastProvider } from './src/components/common/Toast';
 
 const { width } = Dimensions.get('window');
 const LOGO_SIZE = Math.min(width * 0.8, 320);
@@ -167,28 +168,30 @@ export default function App(): React.JSX.Element {
 
   return (
     <SafeAreaProvider>
-      {!showLogo ? (
-        currentScreen === 'superadmin' ? (
-          <View style={styles.darkAppContainer}>
-            <StatusBar style="light" />
-            {renderScreen()}
-          </View>
+      <ToastProvider>
+        {!showLogo ? (
+          currentScreen === 'superadmin' ? (
+            <View style={styles.darkAppContainer}>
+              <StatusBar style="light" />
+              {renderScreen()}
+            </View>
+          ) : (
+            <SafeAreaView style={styles.appContainer}>
+              <StatusBar style="dark" />
+              {renderScreen()}
+            </SafeAreaView>
+          )
         ) : (
-          <SafeAreaView style={styles.appContainer}>
+          <SafeAreaView style={styles.container}>
+            <Image
+              source={require('./assets/icon.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
             <StatusBar style="dark" />
-            {renderScreen()}
           </SafeAreaView>
-        )
-      ) : (
-        <SafeAreaView style={styles.container}>
-          <Image
-            source={require('./assets/icon.png')}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-          <StatusBar style="dark" />
-        </SafeAreaView>
-      )}
+        )}
+      </ToastProvider>
     </SafeAreaProvider>
   );
 }

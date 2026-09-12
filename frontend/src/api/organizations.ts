@@ -19,6 +19,21 @@ export interface OrganizationCreatePayload {
   max_employees: number;
 }
 
+export interface OrganizationUpdatePayload {
+  name?: string;
+  code?: string;
+  website?: string;
+  logo_url?: string;
+  phone?: string;
+  address_line1?: string;
+  address_line2?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postal_code?: string;
+  status?: 'ACTIVE' | 'TRIAL' | 'SUSPENDED';
+}
+
 export interface OrganizationItem {
   id: string;
   name: string;
@@ -50,6 +65,13 @@ export interface OrganizationListResponse {
   items: OrganizationItem[];
 }
 
+export interface UploadLogoOptions {
+  imageUri?: string;
+  base64?: string;
+  mimeType?: string;
+  fileName?: string;
+}
+
 export const organizationsApi = {
   create: async (payload: OrganizationCreatePayload): Promise<OrganizationItem> => {
     return await executeAuthRequest<OrganizationItem>('/organizations', {
@@ -59,28 +81,88 @@ export const organizationsApi = {
   },
 
   uploadLogo: async (
-    imageUri: string,
-    mimeType = 'image/jpeg',
-    fileName = 'org_logo.jpg'
+    optionsOrUri: string | UploadLogoOptions,
+    legacyMime = 'image/jpeg',
+    legacyFileName = 'org_logo.jpg'
   ): Promise<string> => {
-    const formData = new FormData();
-    if (Platform.OS === 'web') {
-      const resp = await fetch(imageUri);
-      const blob = await resp.blob();
-      formData.append('file', blob, fileName);
+    let base64Data: string | undefined;
+    let fileName = legacyFileName;
+    let mimeType = legacyMime;
+    let imageUri: string | undefined;
+
+    if (typeof optionsOrUri === 'string') {
+      imageUri = optionsOrUri;
     } else {
-      formData.append('file', {
-        uri: imageUri,
-        type: mimeType,
-        name: fileName,
-      } as unknown as Blob);
+      imageUri = optionsOrUri.imageUri;
+      base64Data = optionsOrUri.base64;
+      if (optionsOrUri.fileName) fileName = optionsOrUri.fileName;
+      if (optionsOrUri.mimeType) mimeType = optionsOrUri.mimeType;
     }
 
-    const res = await executeAuthRequest<{ logo_url: string }>('/organizations/upload-logo', {
-      method: 'POST',
-      body: formData,
-    });
-    return res.logo_url;
+    // 1. Preferred: If base64 is provided, upload as clean JSON payload.
+    // This avoids Expo SDK 57 "Unsupported FormDataPart implementation" error on React Native Android / iOS.
+    if (base64Data) {
+      const res = await executeAuthRequest<{ logo_url: string }>('/organizations/upload-logo', {
+        method: 'POST',
+        body: JSON.stringify({
+          image_base64: base64Data,
+          filename: fileName,
+          mime_type: mimeType,
+        }),
+      });
+      return res.logo_url;
+    }
+
+    // 2. Web fallback: fetch blob and append to FormData
+    if (Platform.OS === 'web' && imageUri) {
+      const resp = await fetch(imageUri);
+      const blob = await resp.blob();
+      const formData = new FormData();
+      formData.append('file', blob, fileName);
+      const res = await executeAuthRequest<{ logo_url: string }>('/organizations/upload-logo', {
+        method: 'POST',
+        body: formData,
+      });
+      return res.logo_url;
+    }
+
+    // 3. Native fallback if base64 wasn't passed
+    if (imageUri) {
+      try {
+        const resp = await fetch(imageUri);
+        const blob = await resp.blob();
+        const reader = new FileReader();
+        const b64Promise = new Promise<string>((resolve, reject) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+        const fullB64 = await b64Promise;
+        const res = await executeAuthRequest<{ logo_url: string }>('/organizations/upload-logo', {
+          method: 'POST',
+          body: JSON.stringify({
+            image_base64: fullB64,
+            filename: fileName,
+            mime_type: mimeType,
+          }),
+        });
+        return res.logo_url;
+      } catch {
+        const formData = new FormData();
+        formData.append('file', {
+          uri: imageUri,
+          type: mimeType,
+          name: fileName,
+        } as unknown as Blob);
+        const res = await executeAuthRequest<{ logo_url: string }>('/organizations/upload-logo', {
+          method: 'POST',
+          body: formData,
+        });
+        return res.logo_url;
+      }
+    }
+
+    throw new ApiError('No image data provided for logo upload.', 400);
   },
 
   list: async (params?: { search?: string; status?: string; page?: number; page_size?: number }): Promise<OrganizationListResponse> => {
@@ -94,6 +176,32 @@ export const organizationsApi = {
     const endpoint = queryString ? `/organizations?${queryString}` : '/organizations';
     return await executeAuthRequest<OrganizationListResponse>(endpoint, {
       method: 'GET',
+    });
+  },
+
+  delete: async (orgId: string): Promise<{ message: string }> => {
+    return await executeAuthRequest<{ message: string }>(`/organizations/${orgId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  updateLimits: async (
+    orgId: string,
+    limits: { max_admins?: number; max_employees?: number }
+  ): Promise<OrganizationItem> => {
+    return await executeAuthRequest<OrganizationItem>(`/organizations/${orgId}/limits`, {
+      method: 'PUT',
+      body: JSON.stringify(limits),
+    });
+  },
+
+  update: async (
+    orgId: string,
+    payload: OrganizationUpdatePayload
+  ): Promise<OrganizationItem> => {
+    return await executeAuthRequest<OrganizationItem>(`/organizations/${orgId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
     });
   },
 };

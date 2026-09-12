@@ -1,0 +1,72 @@
+import { StyleSheet } from 'react-native';
+
+export const paginationStyles = StyleSheet.create({
+  paginationBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#ECEEF2',
+    borderRadius: 28,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    marginTop: 18,
+    marginBottom: 28,
+  },
+  navBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    gap: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  navBtnDisabled: {
+    opacity: 0.45,
+    backgroundColor: '#F8FAFC',
+    elevation: 0,
+    shadowOpacity: 0,
+  },
+  navBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1657DE',
+  },
+  navBtnTextDisabled: {
+    color: '#94A3B8',
+  },
+  pageCenterWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  pageBubble: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#1657DE',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#1657DE',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  pageBubbleText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  pageTotalText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+});

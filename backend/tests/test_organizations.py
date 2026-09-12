@@ -222,3 +222,39 @@ def test_upload_organization_logo(setup_data):
     assert "logo_url" in data
     assert data["logo_url"].startswith("/static/uploads/logos/")
 
+
+def test_upload_organization_logo_base64_json(setup_data):
+    import base64
+    token = setup_data["super_token"]
+    raw_png = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15c4\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82"
+    b64_str = base64.b64encode(raw_png).decode("utf-8")
+    payload = {
+        "image_base64": f"data:image/png;base64,{b64_str}",
+        "filename": "mobile_logo.png"
+    }
+    res = client.post("/api/v1/organizations/upload-logo", json=payload, headers={"Authorization": f"Bearer {token}"})
+    assert res.status_code == 201
+    data = res.json()
+    assert "logo_url" in data
+    assert data["logo_url"].startswith("/static/uploads/logos/")
+
+
+
+def test_delete_organization_success(setup_data):
+    token = setup_data["super_token"]
+    res_create = client.post(
+        "/api/v1/organizations",
+        json={"name": "Org To Delete", "email": "delete_me@org.com", "max_admins": 1, "max_employees": 10},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert res_create.status_code == 201
+    org_id = res_create.json()["id"]
+
+    res_del = client.delete(f"/api/v1/organizations/{org_id}", headers={"Authorization": f"Bearer {token}"})
+    assert res_del.status_code == 200
+    assert "successfully deleted" in res_del.json()["message"]
+
+    res_get = client.get(f"/api/v1/organizations/{org_id}", headers={"Authorization": f"Bearer {token}"})
+    assert res_get.status_code == 404
+
+
