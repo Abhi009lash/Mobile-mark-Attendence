@@ -22,6 +22,7 @@ class AdminResponse(BaseModel):
     organization_id: uuid.UUID
     organization_name: Optional[str] = None
     organization_code: Optional[str] = None
+    organization_logo_url: Optional[str] = None
     email: EmailStr
     full_name: str
     role: UserRole

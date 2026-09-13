@@ -27,11 +27,13 @@ router = APIRouter()
 def _build_admin_response(admin: User) -> AdminResponse:
     org_name = admin.organization.name if admin.organization else None
     org_code = admin.organization.code if admin.organization else None
+    org_logo = admin.organization.logo_url if admin.organization else None
     return AdminResponse(
         id=admin.id,
         organization_id=admin.organization_id,
         organization_name=org_name,
         organization_code=org_code,
+        organization_logo_url=org_logo,
         email=admin.email,
         full_name=admin.full_name,
         role=admin.role,

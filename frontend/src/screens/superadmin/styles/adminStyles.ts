@@ -1,0 +1,142 @@
+import { StyleSheet } from 'react-native';
+
+export const adminStyles = StyleSheet.create({
+  swipeContainer: {
+    position: 'relative',
+    marginBottom: 12,
+    borderRadius: 16,
+    overflow: 'hidden',
+    backgroundColor: '#DC2626',
+  },
+  swipeDeleteBtn: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: 84,
+    backgroundColor: '#DC2626',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 0,
+  },
+  swipeDeleteText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+    marginTop: 3,
+  },
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+    zIndex: 2,
+  },
+  cardTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#DBEAFE',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+  },
+  avatarText: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#1657DE',
+  },
+  cardInfo: {
+    flex: 1,
+  },
+  adminName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  adminEmail: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 1,
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    gap: 4,
+  },
+  statusBadgeActive: {
+    backgroundColor: '#DCFCE7',
+  },
+  statusBadgeSuspended: {
+    backgroundColor: '#FEE2E2',
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  statusDotActive: {
+    backgroundColor: '#16A34A',
+  },
+  statusDotSuspended: {
+    backgroundColor: '#DC2626',
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  statusTextActive: {
+    color: '#15803D',
+  },
+  statusTextSuspended: {
+    color: '#B91C1C',
+  },
+  orgPillRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    gap: 6,
+  },
+  orgCode: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#1657DE',
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  orgName: {
+    fontSize: 12,
+    color: '#475569',
+    fontWeight: '600',
+    flex: 1,
+  },
+});
